@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang=en>
+<meta charset=utf-8>
+<title>WebMbed</title>
+
+<p>Choose: <input id=file type=file></p>
+
+<script src=webmbed.js></script>
+<script>
+  function extract() {
+    var file
+    if (file = this.files[0]) {
+      webmbed.extract(file, function (err, video) {
+        if (err) throw err
+
+        var v = document.createElement('video')
+        v.controls = true
+        v.src = URL.createObjectURL(video)
+
+        document.body.appendChild(v)
+
+        URL.revokeObjectURL(v.src)
+      })
+    }
+  }
+  var input = document.getElementById('file')
+  input.addEventListener('change', extract)
+  extract.call(input)
+</script>

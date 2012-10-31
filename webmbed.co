@@ -1,0 +1,31 @@
+"use strict"
+
+export webmbed = {}
+
+MAGIC = /\xff\xd9webmbed/
+MAGIC_LEN = MAGIC.toSource!length
+
+# takes a file/Blob input and calls cb(err, Blob video)
+webmbed.extract = !(file, cb) ->
+  f = new FileReader
+    &readAsBinaryString file
+  <-! f.addEventListener \load
+
+  # kind of cheating, by using the JPEG end marker + MAGIC in a regex to detect
+  # the beginning of the video data.
+  # thoughts: instead of just appending the data after the end of the true
+  # image, we could instead put the data in a custom EXIF field, which would be
+  # much harder to filter server-side, should that be an issue.
+
+  pos = @result.search MAGIC
+  if pos is -1
+    cb new Error "Couldn't find anything MAGICAL about this image"
+    return
+
+  cb do
+    null
+    new Blob do
+      [pos.slice pos + MAGIC_LEN]
+      type: \video/webm
+
+
