@@ -1,23 +1,38 @@
 (function(){
   "use strict";
-  var webmbed, MAGIC, MAGIC_LEN, out$ = typeof exports != 'undefined' && exports || this;
+  var webmbed, res$, i$, len$, c, MAGIC, out$ = typeof exports != 'undefined' && exports || this;
   out$.webmbed = webmbed = {};
-  MAGIC = /\xff\xd9webmbed/;
-  MAGIC_LEN = MAGIC.toSource().length;
+  res$ = [];
+  for (i$ = 0, len$ = '\xff\xd9webmbed'.length; i$ < len$; ++i$) {
+    c = '\xff\xd9webmbed'[i$];
+    res$.push(c.charCodeAt(0));
+  }
+  MAGIC = res$;
   webmbed.extract = function(file, cb){
     var x$, f;
     x$ = f = new FileReader;
-    x$.readAsBinaryString(file);
+    x$.readAsArrayBuffer(file);
     f.addEventListener('load', function(){
-      var pos;
-      pos = this.result.search(MAGIC);
+      var data, pos, i, to$, j, ref$, len$, c;
+      data = new Uint8Array(this.result);
+      pos = -1;
+      search: for (i = 0, to$ = data.length; i < to$; ++i) {
+        for (j = 0, len$ = (ref$ = MAGIC).length; j < len$; ++j) {
+          c = ref$[j];
+          if (data[i + j] !== c) {
+            continue search;
+          }
+        }
+        pos = i;
+        break;
+      }
       if (pos === -1) {
         cb(new Error("Couldn't find anything MAGICAL about this image"));
-        return;
+      } else {
+        cb(null, new Blob([data.subarray(pos + MAGIC.length)], {
+          type: 'video/webm'
+        }));
       }
-      cb(null, new Blob([pos.slice(pos + MAGIC_LEN)], {
-        type: 'video/webm'
-      }));
     });
   };
 }).call(this);

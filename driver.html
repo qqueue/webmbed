@@ -10,16 +10,17 @@
   function extract() {
     var file
     if (file = this.files[0]) {
+      console.log(file)
       webmbed.extract(file, function (err, video) {
         if (err) throw err
+
+        console.log(video)
 
         var v = document.createElement('video')
         v.controls = true
         v.src = URL.createObjectURL(video)
 
         document.body.appendChild(v)
-
-        URL.revokeObjectURL(v.src)
       })
     }
   }

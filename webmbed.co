@@ -2,30 +2,32 @@
 
 export webmbed = {}
 
-MAGIC = /\xff\xd9webmbed/
-MAGIC_LEN = MAGIC.toSource!length
+# Magic separator between the end of the jpg and the start of the
+# video. Would be nice if I could use a regex against an ArrayBuffer.
+MAGIC = => c.charCodeAt 0 for c of '\xff\xd9webmbed'
 
 # takes a file/Blob input and calls cb(err, Blob video)
 webmbed.extract = !(file, cb) ->
   f = new FileReader
-    &readAsBinaryString file
+    &readAsArrayBuffer file
   <-! f.addEventListener \load
 
-  # kind of cheating, by using the JPEG end marker + MAGIC in a regex to detect
-  # the beginning of the video data.
-  # thoughts: instead of just appending the data after the end of the true
-  # image, we could instead put the data in a custom EXIF field, which would be
-  # much harder to filter server-side, should that be an issue.
+  data = new Uint8Array @result
 
-  pos = @result.search MAGIC
+  pos = -1
+  :search for i til data.length
+    for c, j of MAGIC
+      continue search if data[i + j] is not c
+    pos = i
+    break
+
   if pos is -1
     cb new Error "Couldn't find anything MAGICAL about this image"
-    return
-
-  cb do
-    null
-    new Blob do
-      [pos.slice pos + MAGIC_LEN]
-      type: \video/webm
+  else
+    cb do
+      null
+      new Blob do
+        [data.subarray pos + MAGIC.length]
+        type: \video/webm
 
 
